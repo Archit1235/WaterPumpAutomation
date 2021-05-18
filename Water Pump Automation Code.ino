@@ -1,40 +1,29 @@
 #include <LiquidCrystal.h>
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
-int relays = 12;
-int trigPin = 11;
-int echoPin = 10;
-int ldr = A0;
-int ON1 = 9;
-int ON2 = 13;
-int OFF = 8;
-int distance;
-long duration;
-bool motor_status = false;
-bool emergency = true;
-bool on_allowed = true;
-bool first = true;
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);    //Declaring the 16x2 LCD
+int relays = 12, trigPin = 11, echoPin = 10, ON = 9, OFF = 8, ldr = A0, distance, max = 90, min = 20;    //Declaring all the integer type variables
+bool status = false, emergency = true, on_allowed = true, first = true;   //Declaring all the bool type variables 
+long duration;    //Declaring long type variable
 
 void setup()
 {
-  lcd.begin(16, 2);
+  lcd.begin(16, 2);   //Initializing the 16x2 LCD
   pinMode(relays, OUTPUT);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  pinMode(ON1, OUTPUT);
-  pinMode(ON2, OUTPUT);
+  pinMode(ON, OUTPUT);
   pinMode(OFF, OUTPUT);
-  digitalWrite(relays, LOW);
-  digitalWrite(OFF, HIGH);
+  digitalWrite(relays, LOW);    //Intial state of the relays which switch ON/OFF the Pump is off to save some power
+  digitalWrite(OFF, HIGH);    //Initial state of OFF relay is on so that the pump can be switched on manually
 }
 
 void loop()
 {
-  lcd.clear();
+  lcd.clear();    //Clearing the LCD in the beginning of the loop everytime to avoid overwriting on the LCD
   lcd.setCursor(0, 0);
-  if (analogRead(ldr) <= 850)
+  if (analogRead(ldr) <= 850)   //ldr is the variable that stores the data from photoresistor that is put near the light which is switched on evertime the generator is turned on. This is to avoid switiching on the pump why the generator is on
   {
     lcd.print("Motor:");
-    if (motor_status == false)
+    if (status == false)
     {
       lcd.print("OFF");
     }
@@ -47,7 +36,8 @@ void loop()
   {
     lcd.print("Generator is on");
   }
-
+  
+  //This section is for calculating the distance of the water level in the tank that the ultrasonic sensor reads
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -58,31 +48,27 @@ void loop()
   lcd.setCursor(0, 1);
   lcd.print("Distance:");
   lcd.print(distance);
-  lcd.print(" ");
-  lcd.print(analogRead(ldr));
 
-  if (first == false)
+  if (first == false)   //This is just to let all the sensor values stabalize 
   {
-    if (analogRead(ldr) <= 850)
+    if (analogRead(ldr) <= 900)   //900 is the minimum value of the ldr when the generators light is on
     {
-      if (distance >= 90 && motor_status == false)
+      if (distance >= max && status == false)   //When the tank is empty and the pump is off, the pump is switched on
       {
-        digitalWrite(ON1, LOW);
-        digitalWrite(ON2, LOW);
+        digitalWrite(ON, LOW);
         digitalWrite(relays, HIGH);
         delay(500);
         digitalWrite(relays, LOW);
-        digitalWrite(ON1, HIGH);
-        digitalWrite(ON2, HIGH);
-        motor_status = true;
+        digitalWrite(ON, HIGH);
+        status = true;
       }
-      if (distance <= 20 && on_allowed == true)
+      if (distance <= min && on_allowed == true)    //When the tank has been filled (whether switched on automatically or manually), the pump is switched off
       {
         digitalWrite(OFF, LOW);
-        motor_status = false;
+        status = false;
         on_allowed = false;
       }
-      if (distance >= 25 && on_allowed == false)
+      if (distance >= (min + 5) && on_allowed == false)   //This is to allow the pump to be switched on manually after the tank has been filled so that the tank doesnt overflow
       {
         digitalWrite(OFF, HIGH);
         on_allowed = true;
