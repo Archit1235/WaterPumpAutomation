@@ -1,6 +1,6 @@
 # WaterPumpAutomation
 This is an Arduino project to automate the filling of water tank. I made this all by my self during 2020-21.
-The code and diagram of the project are in the repository.
+The code and circuit diagram of the project are in the repository.
 
 Features -
 --> A 16x2 LCD is used to display the status of the pump and the water level in the tank.
